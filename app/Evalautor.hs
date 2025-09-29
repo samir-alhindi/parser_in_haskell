@@ -2,6 +2,10 @@ module Evalautor where
 
 import Parsing
 
+eval :: Expr -> Either Double Bool
+eval (AE e) = Left  (a_eval e)
+eval (BE e) = Right (b_eval e)  
+
 a_eval :: AExpr -> Double
 a_eval (Number n) = n
 a_eval (BinaryOpperation opp n1 n2) = case opp of
