@@ -5,6 +5,7 @@ import Parsing
 eval :: Expr -> Either Double Bool
 eval (AE e) = Left  (a_eval e)
 eval (BE e) = Right (b_eval e)  
+eval (Ternary condition then_branch else_branch) = if b_eval condition then eval then_branch else eval else_branch
 
 a_eval :: AExpr -> Double
 a_eval (Number n) = n

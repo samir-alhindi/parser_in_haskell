@@ -8,13 +8,16 @@ import Text.Parsec.Token
 import Text.Parsec.Language
 import Data.Functor.Identity
 
-data Expr = AE AExpr | BE BExpr deriving Show
+data Expr =
+      AE AExpr
+    | BE BExpr
+    | Ternary BExpr Expr Expr
+    deriving Show
 
 data AExpr =
       Number Double
     | BinaryOpperation ABinOpperator AExpr AExpr
     | UnaryOpperation AUnaryOpperator AExpr
-    | Ternary BExpr Expr Expr
     deriving Show
 
 data BExpr =
@@ -45,7 +48,7 @@ TokenParser {
 } = makeTokenParser def
 
 expression :: Parser Expr
-expression = (AE <$> (try a_expression)) <|> (BE <$> b_expression)
+expression = (AE <$> (try a_expression)) <|> (BE <$> (try b_expression)) <|> ternary
 
 a_expression :: Parser AExpr
 a_expression = buildExpressionParser a_table a_term <?> "math expression"
@@ -85,6 +88,16 @@ b_term :: Parser BExpr
 b_term = m_parens b_expression
     <|>(m_reserved "true"   >> return (BoolVal True ))
     <|> (m_reserved "false" >> return (BoolVal False))
+
+ternary :: Parser Expr
+ternary = do
+    m_reserved "if"
+    condition <- b_expression
+    m_reserved "then"
+    then_branch <- expression
+    m_reserved "else"
+    else_branch <- expression
+    return (Ternary condition then_branch else_branch)
 
 my_parse :: String -> Either ParseError Expr
 my_parse source = parse (m_whiteSpace >> expression) "" source
