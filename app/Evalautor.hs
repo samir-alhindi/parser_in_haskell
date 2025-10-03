@@ -7,6 +7,8 @@ data Value =
       Number' {get_num :: Double}
     | Bool' {get_bool :: Bool}
     | String' {get_str :: String}
+    | RuntimeError {get_log :: String}
+    deriving (Eq)
 
 instance Show Value where
     show (Number' n) = show n
@@ -45,12 +47,29 @@ b_eval r_expr      = r_eval r_expr
 
 
 r_eval :: BExpr -> Value
-r_eval (RExpr a1 a2 opp) = 
-    let (n1, n2) = (get_num (a_eval a1), get_num (a_eval a2)) in
-        case opp of
-            Greater         -> Bool' (n1 > n2)
-            Less            -> Bool' (n1 < n2)
-            GreaterEqual    -> Bool' (n1 >= n2)
-            LessEqual       -> Bool' (n1 <= n2)
-            DoubleEquals    -> Bool' (n1 == n2)
-            NotEquals       -> Bool' (n1 /= n2)
+r_eval (RExpr e1 e2 opp)
+            | opp `elem` [Greater, Less, GreaterEqual, LessEqual] = if check_number_opperands e1 e2 then eval_numbers e1 e2 opp else RuntimeError "Error, Both opperands must be numbers"
+            | opp `elem` [DoubleEquals, NotEquals]                = equality e1 e2 opp
+    where
+        eval_numbers :: Expr -> Expr -> ROpperator -> Value
+        eval_numbers e1 e2 opp =
+            let (n1, n2) = (get_num (eval e1), get_num (eval e2)) in
+                Bool' $ case opp of
+                    Greater      -> n1 > n2
+                    Less         -> n1 < n2
+                    GreaterEqual -> n1 >= n2
+                    LessEqual    -> n1 <= n2
+        
+        equality :: Expr -> Expr -> ROpperator -> Value
+        equality e1 e2 opp = let (v1, v2) = (eval e1, eval e2) in
+            Bool' $ case opp of
+                DoubleEquals -> v1 == v2
+                NotEquals    -> v1 /= v2
+
+
+check_number_opperands :: Expr -> Expr -> Bool
+check_number_opperands e1 e2 = (helper (eval e1)) && (helper (eval e2))
+    where
+        helper :: Value -> Bool
+        helper (Number' _) = True
+        _                  = False

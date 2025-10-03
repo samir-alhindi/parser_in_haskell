@@ -27,11 +27,11 @@ data BExpr =
     | And BExpr BExpr
     | Or BExpr BExpr
     | Not BExpr
-    | RExpr AExpr AExpr ROpperator
+    | RExpr Expr Expr ROpperator
     deriving Show
 
 data ABinOpperator = Plus | Minus | Multiply | Divide deriving Show
 
 data AUnaryOpperator = Negation deriving Show
 
-data ROpperator = Greater | Less | GreaterEqual | LessEqual | DoubleEquals | NotEquals deriving Show
+data ROpperator = Greater | Less | GreaterEqual | LessEqual | DoubleEquals | NotEquals deriving (Show, Eq)

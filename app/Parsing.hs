@@ -121,9 +121,9 @@ b_term = m_parens b_expression
 
 r_expression :: Parser BExpr
 r_expression = do
-    a1 <- a_expression
+    a1 <- expression
     opp <- r_opp
-    a2 <- a_expression
+    a2 <- expression
     return (RExpr a1 a2 opp)
         where
             r_opp :: Parser ROpperator
