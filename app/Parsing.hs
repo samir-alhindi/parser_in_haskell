@@ -8,6 +8,13 @@ import Text.Parsec.Token
 import Text.Parsec.Language
 import Data.Functor.Identity
 
+data Stmt =
+      Print Expr
+    | If BExpr Stmt
+    | IfElse BExpr Stmt Stmt
+    | Seq [Stmt]
+
+
 data Expr =
       AE AExpr
     | BE BExpr
@@ -31,12 +38,53 @@ data ABinOpperator = Plus | Minus | Multiply | Divide deriving Show
 
 data AUnaryOpperator = Negation deriving Show
 
+program :: Parser Stmt
+program = (m_parens program <|> statement_sequence) <* eof <?> "program"
+
+statement_sequence :: Parser Stmt
+statement_sequence = do
+    list <- (many1 statement)
+    if length list == 1
+        then return (head list)
+        else return (Seq list)
+
+statement :: Parser Stmt
+statement = try print' <|> try if_else <|> if' <?> "statement"
+
+print' :: Parser Stmt
+print' = do
+    m_reserved "print"
+    expre <- expression
+    m_semi
+    return (Print expre) <?> "print"
+
+if_else :: Parser Stmt
+if_else = do
+    m_reserved "if"
+    condition <- b_expression
+    m_reserved "then"
+    then_branch <- statement
+    m_reserved "else"
+    else_branch <- statement
+    return (IfElse condition then_branch else_branch)
+
+if' :: Parser Stmt
+if' = do
+    m_reserved "if"
+    condition <- b_expression
+    m_reserved "then"
+    then_branch <- statement
+    return (If condition then_branch)
+
+
+
+
 def :: LanguageDef ()
 def = emptyDef {
     opStart = oneOf "+-*/",
     opLetter = oneOf "",
     reservedOpNames = ["+", "-", "*", "/", "and", "or", "not"],
-    reservedNames  = ["true", "false", "and", "or", "not"]
+    reservedNames  = ["true", "false", "and", "or", "not", "if", "then", "else", "do", "while"]
 }
 
 TokenParser {
@@ -44,7 +92,8 @@ TokenParser {
     parens = m_parens,
     reservedOp = m_reservedOp,
     reserved  = m_reserved,
-    whiteSpace = m_whiteSpace
+    whiteSpace = m_whiteSpace,
+    semi       = m_semi
 } = makeTokenParser def
 
 expression :: Parser Expr
@@ -99,5 +148,5 @@ ternary = do
     else_branch <- expression
     return (Ternary condition then_branch else_branch)
 
-my_parse :: String -> Either ParseError Expr
-my_parse source = parse (m_whiteSpace >> expression) "" source
+my_parse :: String -> Either ParseError Stmt
+my_parse source = parse (m_whiteSpace >> program) "" source
