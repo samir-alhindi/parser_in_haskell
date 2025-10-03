@@ -5,7 +5,7 @@ print not true;
 print false;
 print if true then 111 else 222;
 
-if true then
+if 123 then
     print 555;
 else
     print 444;

@@ -5,71 +5,116 @@ import AST
 
 data Value = 
       Number' {get_num :: Double}
-    | Bool' {get_bool :: Bool}
+    | Boolean' {get_bool :: Bool}
     | String' {get_str :: String}
-    | RuntimeError {get_log :: String}
     deriving (Eq)
 
 instance Show Value where
     show (Number' n) = show n
-    show (Bool' b  ) = show b
+    show (Boolean' b  ) = show b
     show (String' s) = show s
 
-exec :: Stmt -> IO ()
-exec (Print expre)                              = print (eval expre)
-exec (If condition then_branch)                 = if get_bool (b_eval condition) then exec then_branch else return ()
-exec (IfElse condition then_branch else_branch) = if get_bool (b_eval condition) then exec then_branch else exec else_branch
-exec (Seq list)                               =   mapM_ exec list
+newtype Error = Error {get_log :: String}
 
-eval :: Expr -> Value
-eval (AE e) =  (a_eval e)
-eval (BE e) =  (b_eval e) 
-eval (Ternary condition then_branch else_branch) = if get_bool (b_eval condition) then eval then_branch else eval else_branch
-eval (StringExpr str) = (String' str)
+instance Show Error where
+    show (Error s) = "Error: " ++ s
 
-a_eval :: AExpr -> Value
-a_eval (Number n) = Number' n
-a_eval (BinaryOpperation opp n1 n2) = case opp of
-    Plus     -> Number' (get_num (a_eval n1) + get_num (a_eval n2))
-    Minus    -> Number' (get_num (a_eval n1) - get_num (a_eval n2))
-    Multiply -> Number' (get_num (a_eval n1) * get_num (a_eval n2))
-    Divide   -> Number' (get_num (a_eval n1) / get_num (a_eval n2))
-a_eval (UnaryOpperation opp n) =  case opp of
-    Negation -> Number' ( - (get_num (a_eval n)))
+exec :: Stmt -> Either Error (IO ())
+exec (Print expre) = print <$> (eval expre)
+exec (If condition then_branch) = case is_bool condition of
+    Right b -> if b then exec then_branch else Right (return ())
+    Left err -> Left err
+exec (IfElse condition then_branch else_branch) = case is_bool condition of
+    Right b -> if b then exec then_branch else exec else_branch
+    Left err -> Left err
+exec (Seq list) = do
+    ios <- mapM exec list
+    Right (sequence_ ios)
 
-
-b_eval :: BExpr -> Value
-b_eval (BoolVal b) = Bool' b
-b_eval (And b1 b2) = Bool' (get_bool (b_eval b1) && get_bool (b_eval b2))
-b_eval (Or b1 b2)  = Bool' (get_bool (b_eval b1) || get_bool (b_eval b2))
-b_eval (Not b)     = Bool' (not (get_bool (b_eval b)))
-b_eval r_expr      = r_eval r_expr
-
-
-r_eval :: BExpr -> Value
-r_eval (RExpr e1 e2 opp)
-            | opp `elem` [Greater, Less, GreaterEqual, LessEqual] = if check_number_opperands e1 e2 then eval_numbers e1 e2 opp else RuntimeError "Error, Both opperands must be numbers"
-            | opp `elem` [DoubleEquals, NotEquals]                = equality e1 e2 opp
+eval :: Expr -> Either Error Value
+eval (Ternary condition then_branch else_branch) = case is_bool condition of
+    Right b  -> if b then eval then_branch else eval else_branch
+    Left err -> Left err
+eval (StringExpr str) = Right (String' str)
+eval (Number n) = Right (Number' n)
+eval (Boolean b)   = Right (Boolean' b)
+eval (Binary opp e1 e2) 
+    | opp `elem` [Plus, Minus, Multiply, Divide] = binary_number opp e1 e2
+    | opp `elem` [And, Or] = binary_boolean opp e1 e2
+    | otherwise = relational opp e1 e2
     where
-        eval_numbers :: Expr -> Expr -> ROpperator -> Value
-        eval_numbers e1 e2 opp =
-            let (n1, n2) = (get_num (eval e1), get_num (eval e2)) in
-                Bool' $ case opp of
-                    Greater      -> n1 > n2
-                    Less         -> n1 < n2
-                    GreaterEqual -> n1 >= n2
-                    LessEqual    -> n1 <= n2
+        binary_number :: BinOpp -> Expr -> Expr -> Either Error Value
+        binary_number opp e1 e2 = case check_number_opperands e1 e2 of
+            Left error -> Left error
+            Right (n1, n2) -> Right $ Number' $ case opp of
+                Plus -> n1 + n2
+                Minus -> n1 - n2
+                Multiply -> n1 * n2
+                Divide -> n1 / n2
         
-        equality :: Expr -> Expr -> ROpperator -> Value
-        equality e1 e2 opp = let (v1, v2) = (eval e1, eval e2) in
-            Bool' $ case opp of
-                DoubleEquals -> v1 == v2
-                NotEquals    -> v1 /= v2
-
-
-check_number_opperands :: Expr -> Expr -> Bool
-check_number_opperands e1 e2 = (helper (eval e1)) && (helper (eval e2))
+        binary_boolean :: BinOpp -> Expr -> Expr -> Either Error Value
+        binary_boolean opp e1 e2 = case check_boolean_opperands e1 e2 of
+            Left error     -> Left error
+            Right (b1, b2) -> Right $ Boolean' $ case opp of
+                And -> b1 && b2
+                Or  -> b1 || b2
+        
+        relational :: BinOpp -> Expr -> Expr -> Either Error Value
+        relational opp e1 e2
+            | opp `elem` [DoubleEquals, NotEquals] = case opp of
+                DoubleEquals -> do
+                    n1 <- eval e1
+                    n2 <- eval e2
+                    return (Boolean' (n1 == n2))
+                NotEquals   -> do
+                    n1 <- eval e1
+                    n2 <- eval e2
+                    return (Boolean' (n1 /= n2))
+            | opp `elem` [Greater, Less, GreaterEqual, LessEqual] = case check_number_opperands e1 e2 of
+                Left error -> Left error
+                Right (n1, n2) -> Right $ Boolean' $ case opp of
+                    Less -> n1 < n2
+                    Greater -> n1 > n2
+                    GreaterEqual -> n1 >= n2
+                    LessEqual -> n1 <= n2
+eval (Unary opp e) = unary opp e
     where
-        helper :: Value -> Bool
-        helper (Number' _) = True
-        _                  = False
+        unary :: UnaryOpp -> Expr -> Either Error Value
+        unary opp e = case opp of
+            Negation -> case eval e of
+                Right (Number' n) -> Right (Number' (-n))
+                Left err -> Left err 
+                _ -> Left (Error ("'-' opperator must be a number."))
+            Not -> case eval e of
+                Right (Boolean' b) -> Right (Boolean' (not b))
+                Left err -> Left err
+                _ -> Left (Error "not opperand must be a boolean.")
+
+is_bool :: Expr -> Either Error Bool
+is_bool expr = case eval expr of
+    Right (Boolean' b) -> Right b
+    Left err -> Left err
+    _         -> Left (Error "Must be a boolean value.")
+
+check_number_opperands :: Expr -> Expr -> Either Error (Double, Double)
+check_number_opperands e1 e2 = do
+    n1 <- eval e1
+    n2 <- eval e2
+    (n1', n2') <- helper (n1, n2)
+    return (n1', n2')
+    where
+        helper :: (Value, Value) -> Either Error (Double, Double)
+        helper (Number' n1, Number' n2) = Right (n1, n2)
+        helper _ = Left (Error "Both opperands must be numbers.")
+
+check_boolean_opperands :: Expr -> Expr -> Either Error (Bool, Bool)
+check_boolean_opperands e1 e2 = do
+    b1 <- eval e1
+    b2 <- eval e2
+    (b1', b2') <- helper (b1, b2)
+    return (b1', b2')
+     
+    where
+        helper :: (Value, Value) -> Either Error (Bool, Bool)
+        helper (Boolean' b1, Boolean' b2) = Right (b1, b2)
+        helper _ = Left (Error "Both opperands must be booleans.")

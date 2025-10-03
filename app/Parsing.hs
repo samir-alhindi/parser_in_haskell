@@ -33,7 +33,7 @@ print' = do
 if_else :: Parser Stmt
 if_else = do
     m_reserved "if"
-    condition <- b_expression
+    condition <- expression
     m_reserved "then"
     then_branch <- statement
     m_reserved "else"
@@ -43,7 +43,7 @@ if_else = do
 if' :: Parser Stmt
 if' = do
     m_reserved "if"
-    condition <- b_expression
+    condition <- expression
     m_reserved "then"
     then_branch <- statement
     return (If condition then_branch)
@@ -67,7 +67,36 @@ TokenParser {
 } = makeTokenParser def
 
 expression :: Parser Expr
-expression = (BE <$> (try b_expression)) <|> (AE <$> (try a_expression)) <|> ternary <|> string''
+expression = buildExpressionParser table term <?> "expression"
+
+term :: Parser Expr
+term = m_parens expression
+    <|> number
+    <|> ternary
+    <|> string''
+    <|> boolean
+
+table :: [[Operator String () Identity Expr]]
+table = [
+    [Prefix (m_reservedOp "-" >> return ((Unary Negation)))           ],
+
+    [Infix  (m_reservedOp "*" >> return (Binary Multiply)) AssocLeft,
+     Infix  (m_reservedOp "/" >> return (Binary Divide))   AssocLeft],
+
+    [Infix  (m_reservedOp "+" >> return (Binary Plus))     AssocLeft,
+     Infix  (m_reservedOp "-" >> return (Binary Minus))    AssocLeft],
+
+    [Infix (m_reservedOp ">" >> return (Binary Greater)) AssocNone,
+     Infix (m_reservedOp "<" >> return (Binary Less))    AssocNone,
+     Infix (m_reservedOp ">=" >> return (Binary GreaterEqual))   AssocNone,
+     Infix (m_reservedOp "<=" >> return (Binary LessEqual))   AssocNone],
+
+    [Infix (m_reservedOp "==" >> return (Binary DoubleEquals)) AssocLeft,
+     Infix (m_reservedOp "!=" >> return (Binary NotEquals))   AssocLeft],
+
+    [Prefix (m_reservedOp "not" >> return (Unary Not))                              ],
+    [Infix  (m_reservedOp "and" >> return (Binary And)) AssocLeft                    ],
+    [Infix  (m_reservedOp "or" >> return (Binary Or)) AssocLeft                      ]]
 
 string'' :: Parser Expr
 string'' = do
@@ -79,66 +108,21 @@ string'' = do
         quotation :: Parser Char
         quotation = char '"'
 
-a_expression :: Parser AExpr
-a_expression = buildExpressionParser a_table a_term <?> "math expression"
-
-a_table :: [[Operator String () Identity AExpr]]
-a_table = [
-    [Prefix (m_reservedOp "-" >> return (UnaryOpperation Negation))           ],
-
-    [Infix  (m_reservedOp "*" >> return (BinaryOpperation Multiply)) AssocLeft,
-     Infix  (m_reservedOp "/" >> return (BinaryOpperation Divide))   AssocLeft],
-
-    [Infix  (m_reservedOp "+" >> return (BinaryOpperation Plus))     AssocLeft,
-     Infix  (m_reservedOp "-" >> return (BinaryOpperation Minus))    AssocLeft]]
-
-number :: Parser AExpr
+number :: Parser Expr
 number = f <$> m_naturalOrFloat
     where
-        f :: Either Integer Double -> AExpr
+        f :: Either Integer Double -> Expr
         f (Left i) = Number (fromIntegral i)
         f (Right d)  = Number d
 
-a_term :: Parser AExpr
-a_term = m_parens a_expression
-    <|> number
-
-b_expression :: Parser BExpr
-b_expression = buildExpressionParser b_table b_term <?> "boolean expression"
-
-b_table :: [[Operator String () Identity BExpr]]
-b_table = [
-    [Prefix (m_reservedOp "not" >> return (Not))           ],
-    [Infix  (m_reservedOp "and" >> return (And)) AssocLeft],
-    [Infix  (m_reservedOp "or" >> return (Or)) AssocLeft]
-    ]
-
-b_term :: Parser BExpr
-b_term = m_parens b_expression
-    <|>(m_reserved "true"   >> return (BoolVal True ))
-    <|> (m_reserved "false" >> return (BoolVal False))
-    <|> r_expression
-
-r_expression :: Parser BExpr
-r_expression = do
-    a1 <- expression
-    opp <- r_opp
-    a2 <- expression
-    return (RExpr a1 a2 opp)
-        where
-            r_opp :: Parser ROpperator
-            r_opp = (m_reservedOp ">" >> return Greater)
-                <|> (m_reservedOp "<" >> return Less)
-                <|> (m_reservedOp ">=" >> return GreaterEqual)
-                <|> (m_reservedOp "<=" >> return LessEqual)
-                <|> (m_reservedOp "==" >> return DoubleEquals)
-                <|> (m_reservedOp "!=" >> return NotEquals)
-
+boolean :: Parser Expr
+boolean = (m_reserved "true"   >> return (Boolean True ))
+    <|> (m_reserved "false" >> return (Boolean False))
 
 ternary :: Parser Expr
 ternary = do
     m_reserved "if"
-    condition <- b_expression
+    condition <- expression
     m_reserved "then"
     then_branch <- expression
     m_reserved "else"

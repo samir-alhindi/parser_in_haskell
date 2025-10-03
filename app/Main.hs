@@ -4,15 +4,15 @@ import Parsing
 import Evalautor
 
 import Text.Parsec
-import Text.Parsec.String
 
 run :: IO ()
 run = do
-    source <- (readFile "C:\\Users\\Samir\\Desktop\\code\\haskell\\expression_parser\\test.smr")
+    source <- (readFile "C:\\Users\\Samir\\Desktop\\code\\haskell\\expression_parser\\test3.smr")
     case my_parse source of
         Left err   -> print err
-        Right e    -> exec e
-
+        Right e    -> case exec e of
+            Left err -> print err
+            Right io -> io
 
 expre_test :: IO ()
 expre_test = do
