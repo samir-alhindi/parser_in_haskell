@@ -1,6 +1,7 @@
 module Evalautor where
 
 import Parsing
+import AST
 
 data Value = 
       Number' {get_num :: Double}
