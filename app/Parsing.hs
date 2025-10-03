@@ -13,6 +13,7 @@ data Stmt =
     | If BExpr Stmt
     | IfElse BExpr Stmt Stmt
     | Seq [Stmt]
+    deriving Show
 
 
 data Expr =
@@ -32,11 +33,14 @@ data BExpr =
     | And BExpr BExpr
     | Or BExpr BExpr
     | Not BExpr
+    | RExpr AExpr AExpr ROpperator
     deriving Show
 
 data ABinOpperator = Plus | Minus | Multiply | Divide deriving Show
 
 data AUnaryOpperator = Negation deriving Show
+
+data ROpperator = Greater | Less | GreaterEqual | LessEqual | DoubleEquals | NotEquals deriving Show
 
 program :: Parser Stmt
 program = (m_parens program <|> statement_sequence) <* eof <?> "program"
@@ -77,13 +81,11 @@ if' = do
     return (If condition then_branch)
 
 
-
-
 def :: LanguageDef ()
 def = emptyDef {
     opStart = oneOf "+-*/",
     opLetter = oneOf "",
-    reservedOpNames = ["+", "-", "*", "/", "and", "or", "not"],
+    reservedOpNames = ["+", "-", "*", "/", ">", "<", ">=", "<=", "==", "!=", "and", "or", "not"],
     reservedNames  = ["true", "false", "and", "or", "not", "if", "then", "else", "do", "while"]
 }
 
@@ -97,7 +99,7 @@ TokenParser {
 } = makeTokenParser def
 
 expression :: Parser Expr
-expression = (AE <$> (try a_expression)) <|> (BE <$> (try b_expression)) <|> ternary
+expression = (BE <$> (try b_expression)) <|> (AE <$> (try a_expression)) <|> ternary
 
 a_expression :: Parser AExpr
 a_expression = buildExpressionParser a_table a_term <?> "math expression"
@@ -137,6 +139,23 @@ b_term :: Parser BExpr
 b_term = m_parens b_expression
     <|>(m_reserved "true"   >> return (BoolVal True ))
     <|> (m_reserved "false" >> return (BoolVal False))
+    <|> r_expression
+
+r_expression :: Parser BExpr
+r_expression = do
+    a1 <- a_expression
+    opp <- r_opp
+    a2 <- a_expression
+    return (RExpr a1 a2 opp)
+        where
+            r_opp :: Parser ROpperator
+            r_opp = (m_reservedOp ">" >> return Greater)
+                <|> (m_reservedOp "<" >> return Less)
+                <|> (m_reservedOp ">=" >> return GreaterEqual)
+                <|> (m_reservedOp "<=" >> return LessEqual)
+                <|> (m_reservedOp "==" >> return DoubleEquals)
+                <|> (m_reservedOp "!=" >> return NotEquals)
+
 
 ternary :: Parser Expr
 ternary = do

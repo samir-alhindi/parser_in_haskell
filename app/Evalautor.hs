@@ -37,3 +37,16 @@ b_eval (BoolVal b) = Bool' b
 b_eval (And b1 b2) = Bool' (get_bool (b_eval b1) && get_bool (b_eval b2))
 b_eval (Or b1 b2)  = Bool' (get_bool (b_eval b1) || get_bool (b_eval b2))
 b_eval (Not b)     = Bool' (not (get_bool (b_eval b)))
+b_eval r_expr      = r_eval r_expr
+
+
+r_eval :: BExpr -> Value
+r_eval (RExpr a1 a2 opp) = 
+    let (n1, n2) = (get_num (a_eval a1), get_num (a_eval a2)) in
+        case opp of
+            Greater         -> Bool' (n1 > n2)
+            Less            -> Bool' (n1 < n2)
+            GreaterEqual    -> Bool' (n1 >= n2)
+            LessEqual       -> Bool' (n1 <= n2)
+            DoubleEquals    -> Bool' (n1 == n2)
+            NotEquals       -> Bool' (n1 /= n2)
