@@ -22,3 +22,5 @@ else
 
 if 1 != 0 then
     print 3;
+
+print "Hello, world";

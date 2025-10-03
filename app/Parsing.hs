@@ -67,7 +67,17 @@ TokenParser {
 } = makeTokenParser def
 
 expression :: Parser Expr
-expression = (BE <$> (try b_expression)) <|> (AE <$> (try a_expression)) <|> ternary
+expression = (BE <$> (try b_expression)) <|> (AE <$> (try a_expression)) <|> ternary <|> string''
+
+string'' :: Parser Expr
+string'' = do
+    quotation
+    content <- manyTill anyChar quotation
+    return (StringExpr content)
+    
+    where
+        quotation :: Parser Char
+        quotation = char '"'
 
 a_expression :: Parser AExpr
 a_expression = buildExpressionParser a_table a_term <?> "math expression"

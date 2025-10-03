@@ -6,10 +6,12 @@ import AST
 data Value = 
       Number' {get_num :: Double}
     | Bool' {get_bool :: Bool}
+    | String' {get_str :: String}
 
 instance Show Value where
     show (Number' n) = show n
     show (Bool' b  ) = show b
+    show (String' s) = show s
 
 exec :: Stmt -> IO ()
 exec (Print expre)                              = print (eval expre)
@@ -21,6 +23,7 @@ eval :: Expr -> Value
 eval (AE e) =  (a_eval e)
 eval (BE e) =  (b_eval e) 
 eval (Ternary condition then_branch else_branch) = if get_bool (b_eval condition) then eval then_branch else eval else_branch
+eval (StringExpr str) = (String' str)
 
 a_eval :: AExpr -> Value
 a_eval (Number n) = Number' n

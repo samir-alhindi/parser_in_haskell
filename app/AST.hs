@@ -12,6 +12,7 @@ data Stmt =
 data Expr =
       AE AExpr
     | BE BExpr
+    | StringExpr String
     | Ternary BExpr Expr Expr
     deriving Show
 
