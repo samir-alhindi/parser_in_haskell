@@ -17,16 +17,19 @@ statement_sequence :: Parser [Stmt]
 statement_sequence = many1 statement
     
 statement :: Parser Stmt
-statement = try print' <|> try if_else <|> try if' <|> variable_declaration <?> "statement"
+statement = try print' <|> try if_else <|> try if' <|> try let_binding <|> block <?> "statement"
 
-variable_declaration :: Parser Stmt
-variable_declaration = do
-    m_reserved "var"
+block :: Parser Stmt
+block = Block <$> (m_braces statement_sequence)
+
+let_binding :: Parser Stmt
+let_binding = do
+    m_reserved "let"
     name <- m_identifier
     m_reservedOp "="
     initialization <- expression
     m_semi
-    return (VarDeclre name initialization)
+    return (LetBinding name initialization)
 
 
 print' :: Parser Stmt
@@ -60,12 +63,13 @@ def = emptyDef {
     opStart = oneOf "+-*/><=!",
     opLetter = oneOf "<>=",
     reservedOpNames = ["+", "-", "*", "/", ">", "<", ">=", "<=", "==", "!=", "and", "or", "not", "="],
-    reservedNames  = ["true", "false", "and", "or", "not", "if", "then", "else", "do", "while", "var"]
+    reservedNames  = ["true", "false", "and", "or", "not", "if", "then", "else", "do", "while", "let"]
 }
 
 TokenParser {
     naturalOrFloat  = m_naturalOrFloat,
     parens = m_parens,
+    braces = m_braces,
     reservedOp = m_reservedOp,
     reserved  = m_reserved,
     identifier = m_identifier,

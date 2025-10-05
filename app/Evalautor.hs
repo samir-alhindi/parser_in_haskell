@@ -32,12 +32,14 @@ exec (If condition then_branch) envi = do
 exec (IfElse condition then_branch else_branch) envi = do
     condition' <- is_bool envi condition
     if condition' then exec then_branch envi else exec else_branch envi
-exec (VarDeclre name init) envi = do
+exec (LetBinding name init) envi = do
     init' <- eval init envi
     let envi' = case envi of
             (Global map)            -> Global ((name, init') : map)
             (Environment map outer) -> Environment ((name, init') : map) outer
     return (envi', return ())
+--exec (Block stmts) envi = let envi' = Environment ([]) envi in
+
 
 eval :: Expr -> Environment -> Either Error Value
 eval (Ternary condition then_branch else_branch) envi = do

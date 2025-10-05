@@ -5,7 +5,7 @@ data Stmt =
       Print Expr
     | If Expr Stmt
     | IfElse Expr Stmt Stmt
-    | VarDeclre String Expr
+    | LetBinding String Expr
     | Block [Stmt]
     deriving Show
 
