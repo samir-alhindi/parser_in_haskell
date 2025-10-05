@@ -6,6 +6,7 @@ data Stmt =
     | If Expr Stmt
     | IfElse Expr Stmt Stmt
     | VarDeclre String Expr
+    | Block [Stmt]
     deriving Show
 
 data Expr =

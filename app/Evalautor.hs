@@ -13,7 +13,7 @@ instance Show Error where
     show (Error s) = "Error: " ++ s
 
 exec_program :: [Stmt] -> Either Error (IO ())
-exec_program program = helper program []
+exec_program program = helper program (Global [])
     where
         helper :: [Stmt] -> Environment -> Either Error (IO ())
         helper [] _ = Right (return ())
@@ -34,7 +34,9 @@ exec (IfElse condition then_branch else_branch) envi = do
     if condition' then exec then_branch envi else exec else_branch envi
 exec (VarDeclre name init) envi = do
     init' <- eval init envi
-    let envi' = (name, init') : envi
+    let envi' = case envi of
+            (Global map)            -> Global ((name, init') : map)
+            (Environment map outer) -> Environment ((name, init') : map) outer
     return (envi', return ())
 
 eval :: Expr -> Environment -> Either Error Value
