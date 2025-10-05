@@ -12,15 +12,15 @@ instance Show Value where
 instance Show Error where
     show (Error s) = "Error: " ++ s
 
-exec_program :: [Stmt] -> Either Error [IO ()]
+exec_program :: [Stmt] -> Either Error (IO ())
 exec_program program = helper program []
     where
-        helper :: [Stmt] -> Environment -> Either Error [IO ()]
-        helper [] _ = Right [return ()]
+        helper :: [Stmt] -> Environment -> Either Error (IO ())
+        helper [] _ = Right (return ())
         helper (stmt:rest) envi = do
             (envi', io) <- exec stmt envi
-            ios         <- helper rest envi'
-            return (io : ios)
+            io'         <- helper rest envi'
+            return (io >> io')
 
 exec ::  Stmt -> Environment -> Either Error (Environment, IO())
 exec (Print expr) envi = do

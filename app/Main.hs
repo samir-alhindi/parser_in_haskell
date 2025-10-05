@@ -12,8 +12,7 @@ run = do
         Left err         -> print err
         Right program    -> case exec_program program of
             Left err -> print err
-            Right [] -> print ""
-            Right list -> sequence_ list
+            Right io -> io
 
 main :: IO ()
 main = run
