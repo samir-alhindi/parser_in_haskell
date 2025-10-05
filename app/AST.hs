@@ -12,12 +12,14 @@ data Stmt =
 data Expr =
       Number Double
     | Boolean Bool
-    | Variable String
+    | Name String
     | Binary BinOpp Expr Expr
     | Unary UnaryOpp Expr
     | StringExpr String
     | Ternary Expr Expr Expr
-    deriving Show
+    | Lambda [String] Expr
+    | Call Expr [Expr]
+    deriving (Show, Eq)
 
 data BinOpp = Plus | Minus | Multiply | Divide
   | And | Or
@@ -25,11 +27,3 @@ data BinOpp = Plus | Minus | Multiply | Divide
   deriving (Show, Eq)
 
 data UnaryOpp = Negation | Not deriving (Show, Eq)
-
-data Value = 
-      Number' {get_num :: Double}
-    | Boolean' {get_bool :: Bool}
-    | String' {get_str :: String}
-    deriving (Eq)
-
-newtype Error = Error {get_log :: String}

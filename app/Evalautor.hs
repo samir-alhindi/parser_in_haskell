@@ -1,13 +1,16 @@
 module Evalautor where
 
+import Data.Either
+
 import Parsing
 import AST
-import Environment
+import RuntimeData
 
 instance Show Value where
     show (Number' n) = show n
     show (Boolean' b  ) = show b
     show (String' s) = show s
+    show (Lambda' _ _ _ _) = "lambda"
 
 instance Show Error where
     show (Error s) = "Error: " ++ s
@@ -55,7 +58,7 @@ eval (Ternary condition then_branch else_branch) envi = do
     condition' <- is_bool envi condition
     if condition' then eval then_branch envi else eval else_branch envi
 eval (StringExpr str) _ = Right (String' str)
-eval (Variable name) envi = find envi name
+eval (Name name) envi = find envi name
 eval (Number n) _ = Right (Number' n)
 eval (Boolean b) _ = Right (Boolean' b)
 eval (Binary opp e1 e2) envi
@@ -110,6 +113,25 @@ eval (Unary opp e) envi = unary envi opp e
                 Left err -> Left err
                 _ -> Left (Error "not opperand must be a boolean.")
 
+eval (Lambda parameters body) envi = Right (Lambda' parameters body envi (length parameters))
+eval (Call callee args) envi = do
+    callee' <- eval callee envi
+    case callee' of
+        (Lambda' _ _ _ _) -> eval_call envi args callee'
+        _ -> Left (Error ("Cannot call: " ++ (type_of callee')) )
+    where
+        eval_call :: Environment -> [Expr] -> Value -> Either Error Value
+        eval_call envi args (Lambda' parameters body closure arity) = do
+            check_arity arity (length args)
+            let args' = rights (map ((flip eval) envi) args)
+            let pairs = zip parameters args'
+            let envi' = Environment pairs closure
+            result <- eval body envi'
+            return result
+        
+        check_arity :: Int -> Int -> Either Error Value
+        check_arity expected_arity actual_arity = if expected_arity == actual_arity then Right (Number' 0) else Left (Error ("Exptected an arity of " ++ (show expected_arity) ++ " but got " ++ (show actual_arity)))
+
 is_bool :: Environment -> Expr -> Either Error Bool
 is_bool envi expr = case eval expr envi of
     Right (Boolean' b) -> Right b
@@ -137,3 +159,10 @@ check_boolean_opperands envi e1 e2 = do
         helper :: (Value, Value) -> Either Error (Bool, Bool)
         helper (Boolean' b1, Boolean' b2) = Right (b1, b2)
         helper _ = Left (Error "Both opperands must be booleans.")
+
+type_of :: Value -> String
+type_of v = case v of
+    String' _ -> "string"
+    Number' _  -> "number"
+    Boolean'   _  -> "boolean"
+    Lambda' _ _ _ _ -> "lambda"

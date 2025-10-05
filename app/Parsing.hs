@@ -63,7 +63,7 @@ def = emptyDef {
     opStart = oneOf "+-*/><=!",
     opLetter = oneOf "<>=",
     reservedOpNames = ["+", "-", "*", "/", ">", "<", ">=", "<=", "==", "!=", "and", "or", "not", "="],
-    reservedNames  = ["true", "false", "and", "or", "not", "if", "then", "else", "do", "while", "let"]
+    reservedNames  = ["true", "false", "and", "or", "not", "if", "then", "else", "do", "while", "let", "\\", "->"]
 }
 
 TokenParser {
@@ -82,12 +82,16 @@ expression :: Parser Expr
 expression = buildExpressionParser table term <?> "expression"
 
 term :: Parser Expr
-term = m_parens expression
-    <|> number
-    <|> ternary
-    <|> StringExpr <$> m_stringLiteral
-    <|> boolean
-    <|> Variable <$> m_identifier
+term = try call <|> atom
+
+atom :: Parser Expr
+atom = m_parens expression
+    <|> try number
+    <|> try ternary
+    <|> try (StringExpr <$> m_stringLiteral)
+    <|> try boolean
+    <|> try identifier'
+    <|> try lambda
 
 table :: [[Operator String () Identity Expr]]
 table = [
@@ -118,9 +122,29 @@ number = f <$> m_naturalOrFloat
         f (Left i) = Number (fromIntegral i)
         f (Right d)  = Number d
 
+identifier' :: Parser Expr
+identifier' = Name <$> m_identifier
+
 boolean :: Parser Expr
 boolean = (m_reserved "true"   >> return (Boolean True ))
     <|> (m_reserved "false" >> return (Boolean False))
+
+lambda :: Parser Expr
+lambda = do
+    m_reserved "\\"
+    parameters <- many1 m_identifier
+    m_reserved "->"
+    body <- expression
+    return (Lambda parameters body)
+
+call :: Parser Expr
+call = do
+    callee <- valid_callee <|> (m_parens valid_callee)
+    args <- many1 expression
+    return (Call callee args)
+        where
+            valid_callee :: Parser Expr
+            valid_callee = identifier' <|> lambda <|> (m_parens expression)
 
 ternary :: Parser Expr
 ternary = do
