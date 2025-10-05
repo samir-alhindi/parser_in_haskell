@@ -24,6 +24,7 @@ data Expr =
 data BinOpp = Plus | Minus | Multiply | Divide
   | And | Or
   | Greater | Less | GreaterEqual | LessEqual | DoubleEquals | NotEquals
+  | Bind
   deriving (Show, Eq)
 
 data UnaryOpp = Negation | Not deriving (Show, Eq)

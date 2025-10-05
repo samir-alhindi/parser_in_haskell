@@ -65,6 +65,7 @@ eval (Binary opp e1 e2) envi
     | opp `elem` [Minus, Multiply, Divide] = binary_number envi opp e1 e2
     | opp `elem` [And, Or] = binary_boolean envi opp e1 e2
     | opp == Plus = plus envi e1 e2
+    | opp == Bind = bind envi e1 e2
     | otherwise = relational envi opp e1 e2
     where
         binary_number :: Environment -> BinOpp -> Expr -> Expr -> Either Error Value
@@ -108,6 +109,20 @@ eval (Binary opp e1 e2) envi
                 (Number' n1, Number' n2) -> return (Number' (n1 + n2))
                 (String' s1, String' s2) -> return (String' (s1 ++ s2))
                 _ -> Left (Error("cannot add value of type "++(type_of e1')++" and "++(type_of e2')))
+    
+        bind :: Environment -> Expr -> Expr -> Either Error Value
+        bind envi e1 e2 = do
+            f <- eval e1 envi
+            x <- eval e2 envi
+            case f of
+                (Lambda' parameters body closure arity) ->
+                    if arity <= 1
+                        then Left (Error "Cannot bind lambda that only takes 1 arg.")
+                        else
+                            let closure' = Environment ((head parameters, x) : []) closure
+                            in Right (Lambda' (tail parameters) body closure' (arity-1))
+                _                -> Left (Error (">< left opperand cannot be of type "++(type_of f)))
+
 eval (Unary opp e) envi = unary envi opp e
     where
         unary :: Environment -> UnaryOpp -> Expr -> Either Error Value
