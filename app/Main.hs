@@ -7,7 +7,7 @@ import Text.Parsec
 
 run :: IO ()
 run = do
-    source <- (readFile "C:\\Users\\Samir\\Desktop\\code\\haskell\\expression_parser\\test_var.smr")
+    source <- (readFile "C:\\Users\\Samir\\Desktop\\code\\haskell\\expression_parser\\test2.smr")
     case my_parse source of
         Left err         -> print err
         Right program    -> case exec_program program of

@@ -38,8 +38,17 @@ exec (LetBinding name init) envi = do
             (Global map)            -> Global ((name, init') : map)
             (Environment map outer) -> Environment ((name, init') : map) outer
     return (envi', return ())
---exec (Block stmts) envi = let envi' = Environment ([]) envi in
-
+exec (Block stmts) envi = do
+    let envi' = Environment [] envi
+    (_, io) <- exec_block stmts envi'
+    Right (envi, io)
+    where
+        exec_block :: [Stmt] -> Environment -> Either Error (Environment, IO())
+        exec_block [] envi = Right (envi, return ())
+        exec_block (stmt:rest) envi = do
+            (envi', io) <- exec stmt envi
+            (_, io')    <- exec_block rest envi'
+            Right (envi, (io >> io'))
 
 eval :: Expr -> Environment -> Either Error Value
 eval (Ternary condition then_branch else_branch) envi = do
