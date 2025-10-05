@@ -13,3 +13,7 @@ print ((\ x -> x + 1) 1);
 print ((product 4) 5);
 
 print ((product 4) 5) + sqr 4;
+
+let greet = \ name -> "Hello: " + name;
+print greet "Samir";
+print greet "Yahya";

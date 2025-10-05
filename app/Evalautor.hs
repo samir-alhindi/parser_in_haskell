@@ -62,15 +62,15 @@ eval (Name name) envi = find envi name
 eval (Number n) _ = Right (Number' n)
 eval (Boolean b) _ = Right (Boolean' b)
 eval (Binary opp e1 e2) envi
-    | opp `elem` [Plus, Minus, Multiply, Divide] = binary_number envi opp e1 e2
+    | opp `elem` [Minus, Multiply, Divide] = binary_number envi opp e1 e2
     | opp `elem` [And, Or] = binary_boolean envi opp e1 e2
+    | opp == Plus = plus envi e1 e2
     | otherwise = relational envi opp e1 e2
     where
         binary_number :: Environment -> BinOpp -> Expr -> Expr -> Either Error Value
         binary_number envi opp e1 e2 = case check_number_opperands envi e1 e2 of
             Left error -> Left error
             Right (n1, n2) -> Right $ Number' $ case opp of
-                Plus -> n1 + n2
                 Minus -> n1 - n2
                 Multiply -> n1 * n2
                 Divide -> n1 / n2
@@ -100,6 +100,14 @@ eval (Binary opp e1 e2) envi
                     Greater -> n1 > n2
                     GreaterEqual -> n1 >= n2
                     LessEqual -> n1 <= n2
+        plus :: Environment -> Expr -> Expr -> Either Error Value
+        plus envi e1 e2 = do
+            e1' <- eval e1 envi
+            e2' <- eval e2 envi
+            case (e1', e2') of
+                (Number' n1, Number' n2) -> return (Number' (n1 + n2))
+                (String' s1, String' s2) -> return (String' (s1 ++ s2))
+                _ -> Left (Error("cannot add value of type "++(type_of e1')++" and "++(type_of e2')))
 eval (Unary opp e) envi = unary envi opp e
     where
         unary :: Environment -> UnaryOpp -> Expr -> Either Error Value

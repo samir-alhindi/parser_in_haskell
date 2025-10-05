@@ -10,7 +10,7 @@ run = do
     source <- (readFile "C:\\Users\\Samir\\Desktop\\code\\haskell\\expression_parser\\lambda.smr")
     case my_parse source of
         Left err         -> print err
-        Right program    -> print program >> case exec_program program of
+        Right program    -> case exec_program program of
             Left err -> print err
             Right io -> io
 
