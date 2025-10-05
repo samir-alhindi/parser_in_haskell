@@ -1,0 +1,16 @@
+
+
+var x = 5;
+var x = 7;
+
+var age = 20;
+var can_enter = if age >= 18 then "Yes" else "No";
+
+print can_enter;
+
+print x + 1;
+
+var z = x*2;
+
+print z;
+

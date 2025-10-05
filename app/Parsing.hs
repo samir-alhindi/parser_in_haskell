@@ -10,18 +10,24 @@ import Data.Functor.Identity
 
 import AST
 
-program :: Parser Stmt
-program = (m_parens program <|> statement_sequence) <* eof <?> "program"
+program :: Parser [Stmt]
+program = statement_sequence <* eof <?> "program"
 
-statement_sequence :: Parser Stmt
-statement_sequence = do
-    list <- (many1 statement)
-    if length list == 1
-        then return (head list)
-        else return (Seq list)
-
+statement_sequence :: Parser [Stmt]
+statement_sequence = many1 statement
+    
 statement :: Parser Stmt
-statement = try print' <|> try if_else <|> if' <?> "statement"
+statement = try print' <|> try if_else <|> try if' <|> variable_declaration <?> "statement"
+
+variable_declaration :: Parser Stmt
+variable_declaration = do
+    m_reserved "var"
+    name <- m_identifier
+    m_reservedOp "="
+    initialization <- expression
+    m_semi
+    return (VarDeclre name initialization)
+
 
 print' :: Parser Stmt
 print' = do
@@ -51,10 +57,10 @@ if' = do
 
 def :: LanguageDef ()
 def = emptyDef {
-    opStart = oneOf "+-*/",
-    opLetter = oneOf "",
-    reservedOpNames = ["+", "-", "*", "/", ">", "<", ">=", "<=", "==", "!=", "and", "or", "not"],
-    reservedNames  = ["true", "false", "and", "or", "not", "if", "then", "else", "do", "while"]
+    opStart = oneOf "+-*/><=!",
+    opLetter = oneOf "<>=",
+    reservedOpNames = ["+", "-", "*", "/", ">", "<", ">=", "<=", "==", "!=", "and", "or", "not", "="],
+    reservedNames  = ["true", "false", "and", "or", "not", "if", "then", "else", "do", "while", "var"]
 }
 
 TokenParser {
@@ -62,8 +68,10 @@ TokenParser {
     parens = m_parens,
     reservedOp = m_reservedOp,
     reserved  = m_reserved,
+    identifier = m_identifier,
     whiteSpace = m_whiteSpace,
-    semi       = m_semi
+    semi       = m_semi,
+    stringLiteral  = m_stringLiteral
 } = makeTokenParser def
 
 expression :: Parser Expr
@@ -73,8 +81,9 @@ term :: Parser Expr
 term = m_parens expression
     <|> number
     <|> ternary
-    <|> string''
+    <|> StringExpr <$> m_stringLiteral
     <|> boolean
+    <|> Variable <$> m_identifier
 
 table :: [[Operator String () Identity Expr]]
 table = [
@@ -96,17 +105,7 @@ table = [
 
     [Prefix (m_reservedOp "not" >> return (Unary Not))                              ],
     [Infix  (m_reservedOp "and" >> return (Binary And)) AssocLeft                    ],
-    [Infix  (m_reservedOp "or" >> return (Binary Or)) AssocLeft                      ]]
-
-string'' :: Parser Expr
-string'' = do
-    quotation
-    content <- manyTill anyChar quotation
-    return (StringExpr content)
-    
-    where
-        quotation :: Parser Char
-        quotation = char '"'
+    [Infix  (m_reservedOp "or" >> return (Binary Or)) AssocLeft                      ]]    
 
 number :: Parser Expr
 number = f <$> m_naturalOrFloat
@@ -129,5 +128,5 @@ ternary = do
     else_branch <- expression
     return (Ternary condition then_branch else_branch)
 
-my_parse :: String -> Either ParseError Stmt
+my_parse :: String -> Either ParseError [Stmt]
 my_parse source = parse (m_whiteSpace >> program) "" source

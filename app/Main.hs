@@ -7,19 +7,13 @@ import Text.Parsec
 
 run :: IO ()
 run = do
-    source <- (readFile "C:\\Users\\Samir\\Desktop\\code\\haskell\\expression_parser\\test3.smr")
+    source <- (readFile "C:\\Users\\Samir\\Desktop\\code\\haskell\\expression_parser\\test_var.smr")
     case my_parse source of
-        Left err   -> print err
-        Right e    -> case exec e of
+        Left err         -> print err
+        Right program    -> case exec_program program of
             Left err -> print err
-            Right io -> io
-
-expre_test :: IO ()
-expre_test = do
-    source <- (readFile "C:\\Users\\Samir\\Desktop\\code\\haskell\\expression_parser\\test2.smr")
-    case parse expression "" source of
-        Left err   -> print err
-        Right e    -> print (eval e)
+            Right [] -> print ""
+            Right list -> sequence_ list
 
 main :: IO ()
 main = run
