@@ -63,7 +63,7 @@ def = emptyDef {
     opStart = oneOf "+-*/><=!",
     opLetter = oneOf "<>=",
     reservedOpNames = ["+", "-", "*", "/", ">", "<", ">=", "<=", "==", "!=", "and", "or", "not", "=", "><"],
-    reservedNames  = ["true", "false", "and", "or", "not", "if", "then", "else", "do", "while", "let", "\\", "->"]
+    reservedNames  = ["true", "false", "and", "or", "not", "if", "then", "else", "let", "in", "\\", "->"]
 }
 
 TokenParser {
@@ -92,6 +92,7 @@ atom = m_parens expression
     <|> try boolean
     <|> try identifier'
     <|> try lambda
+    <|> try let_expr
 
 table :: [[Operator String () Identity Expr]]
 table = [
@@ -130,6 +131,17 @@ identifier' = Name <$> m_identifier
 boolean :: Parser Expr
 boolean = (m_reserved "true"   >> return (Boolean True ))
     <|> (m_reserved "false" >> return (Boolean False))
+
+let_expr :: Parser Expr
+let_expr = do
+    m_reserved "let"
+    name <- m_identifier
+    m_reservedOp "="
+    init <- expression
+    m_reserved "in"
+    result <- expression
+    return (LetExpr name init result)
+
 
 lambda :: Parser Expr
 lambda = do

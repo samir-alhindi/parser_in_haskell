@@ -13,6 +13,7 @@ data Expr =
       Number Double
     | Boolean Bool
     | Name String
+    | LetExpr String Expr Expr
     | Binary BinOpp Expr Expr
     | Unary UnaryOpp Expr
     | StringExpr String

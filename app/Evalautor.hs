@@ -155,6 +155,12 @@ eval (Call callee args) envi = do
         check_arity :: Int -> Int -> Either Error Value
         check_arity expected_arity actual_arity = if expected_arity == actual_arity then Right (Number' 0) else Left (Error ("Exptected an arity of " ++ (show expected_arity) ++ " but got " ++ (show actual_arity)))
 
+eval (LetExpr name init body) envi = do
+    value <- eval init envi
+    let envi' = Environment [(name, value)] envi
+    result <- eval body envi'
+    return result
+
 is_bool :: Environment -> Expr -> Either Error Bool
 is_bool envi expr = case eval expr envi of
     Right (Boolean' b) -> Right b
