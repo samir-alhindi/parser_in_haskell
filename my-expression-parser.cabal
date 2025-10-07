@@ -68,7 +68,7 @@ executable my-expression-parser
     -- other-extensions:
 
     -- Other library packages from which modules are imported.
-    build-depends:    base ^>=4.18.3.0, parsec
+    build-depends:    base ^>=4.18.3.0, zlib-clib, zlib, zlib ^>= 0.7.1.1, parsec, ghci-dap, haskell-debug-adapter
 
     -- Directories containing source files.
     hs-source-dirs:   app

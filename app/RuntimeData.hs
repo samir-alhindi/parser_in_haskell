@@ -7,9 +7,20 @@ data Value =
     | Boolean' {get_bool :: Bool}
     | String' {get_str :: String}
     | Lambda' [String] Expr Environment Int
+    | Function' String [String] Expr Environment Int
     deriving (Eq)
 
 newtype Error = Error {get_log :: String}
+
+instance Show Value where
+    show (Number' n) = show n
+    show (Boolean' b  ) = show b
+    show (String' s) = show s
+    show (Lambda' _ _ _ _) = "lambda"
+    show (Function' name parameters _ _ _) = name ++ " : " ++ (concat parameters)
+
+instance Show Error where
+    show (Error s) = "Error: " ++ s
 
 type Map = [(String, Value)]
 

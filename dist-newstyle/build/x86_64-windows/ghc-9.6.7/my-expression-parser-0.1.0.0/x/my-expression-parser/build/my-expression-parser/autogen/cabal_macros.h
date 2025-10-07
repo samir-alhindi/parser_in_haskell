@@ -20,6 +20,26 @@
   (major1) == 4 && (major2) <  18 || \
   (major1) == 4 && (major2) == 18 && (minor) <= 3)
 #endif /* MIN_VERSION_base */
+/* package ghci-dap-0.0.26.0 */
+#ifndef VERSION_ghci_dap
+#define VERSION_ghci_dap "0.0.26.0"
+#endif /* VERSION_ghci_dap */
+#ifndef MIN_VERSION_ghci_dap
+#define MIN_VERSION_ghci_dap(major1,major2,minor) (\
+  (major1) <  0 || \
+  (major1) == 0 && (major2) <  0 || \
+  (major1) == 0 && (major2) == 0 && (minor) <= 26)
+#endif /* MIN_VERSION_ghci_dap */
+/* package haskell-debug-adapter-0.0.42.0 */
+#ifndef VERSION_haskell_debug_adapter
+#define VERSION_haskell_debug_adapter "0.0.42.0"
+#endif /* VERSION_haskell_debug_adapter */
+#ifndef MIN_VERSION_haskell_debug_adapter
+#define MIN_VERSION_haskell_debug_adapter(major1,major2,minor) (\
+  (major1) <  0 || \
+  (major1) == 0 && (major2) <  0 || \
+  (major1) == 0 && (major2) == 0 && (minor) <= 42)
+#endif /* MIN_VERSION_haskell_debug_adapter */
 /* package parsec-3.1.16.1 */
 #ifndef VERSION_parsec
 #define VERSION_parsec "3.1.16.1"
@@ -30,6 +50,26 @@
   (major1) == 3 && (major2) <  1 || \
   (major1) == 3 && (major2) == 1 && (minor) <= 16)
 #endif /* MIN_VERSION_parsec */
+/* package zlib-0.7.1.1 */
+#ifndef VERSION_zlib
+#define VERSION_zlib "0.7.1.1"
+#endif /* VERSION_zlib */
+#ifndef MIN_VERSION_zlib
+#define MIN_VERSION_zlib(major1,major2,minor) (\
+  (major1) <  0 || \
+  (major1) == 0 && (major2) <  7 || \
+  (major1) == 0 && (major2) == 7 && (minor) <= 1)
+#endif /* MIN_VERSION_zlib */
+/* package zlib-clib-1.3.1 */
+#ifndef VERSION_zlib_clib
+#define VERSION_zlib_clib "1.3.1"
+#endif /* VERSION_zlib_clib */
+#ifndef MIN_VERSION_zlib_clib
+#define MIN_VERSION_zlib_clib(major1,major2,minor) (\
+  (major1) <  1 || \
+  (major1) == 1 && (major2) <  3 || \
+  (major1) == 1 && (major2) == 3 && (minor) <= 1)
+#endif /* MIN_VERSION_zlib_clib */
 
 /* tool gcc-14.0.6 */
 #ifndef TOOL_VERSION_gcc
@@ -111,16 +151,6 @@
   (major1) == 9 && (major2) <  6 || \
   (major1) == 9 && (major2) == 6 && (minor) <= 7)
 #endif /* MIN_TOOL_VERSION_runghc */
-/* tool strip-2.43 */
-#ifndef TOOL_VERSION_strip
-#define TOOL_VERSION_strip "2.43"
-#endif /* TOOL_VERSION_strip */
-#ifndef MIN_TOOL_VERSION_strip
-#define MIN_TOOL_VERSION_strip(major1,major2,minor) (\
-  (major1) <  2 || \
-  (major1) == 2 && (major2) <  43 || \
-  (major1) == 2 && (major2) == 43 && (minor) <= 0)
-#endif /* MIN_TOOL_VERSION_strip */
 
 #ifndef CURRENT_COMPONENT_ID
 #define CURRENT_COMPONENT_ID "my-expression-parser-0.1.0.0-inplace-my-expression-parser"

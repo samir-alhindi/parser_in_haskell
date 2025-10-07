@@ -17,7 +17,23 @@ statement_sequence :: Parser [Stmt]
 statement_sequence = many1 statement
     
 statement :: Parser Stmt
-statement = try print' <|> try if_else <|> try if' <|> try let_binding <|> block <?> "statement"
+statement =
+    try print'
+    <|> try if_else
+    <|> try if'
+    <|> try let_binding
+    <|> try block
+    <|> try function
+    <?> "statement"
+
+function :: Parser Stmt
+function = do
+    name <- m_identifier
+    parameters <- many1 m_identifier
+    m_reservedOp "="
+    body <- expression
+    m_semi
+    return (Function name parameters body)
 
 block :: Parser Stmt
 block = Block <$> (m_braces statement_sequence)
@@ -62,7 +78,7 @@ def :: LanguageDef ()
 def = emptyDef {
     opStart = oneOf "+-*/><=!",
     opLetter = oneOf "<>=",
-    reservedOpNames = ["+", "-", "*", "/", ">", "<", ">=", "<=", "==", "!=", "and", "or", "not", "=", "><"],
+    reservedOpNames = ["+", "-", "*", "/", ">", "<", ">=", "<=", "==", "!=", "and", "or", "not", "=", "><", "<>"],
     reservedNames  = ["true", "false", "and", "or", "not", "if", "then", "else", "let", "in", "\\", "->"]
 }
 
@@ -154,7 +170,7 @@ lambda = do
 call :: Parser Expr
 call = do
     callee <- valid_callee <|> (m_parens valid_callee)
-    args <- many1 expression
+    args <- many1 atom
     return (Call callee args)
         where
             valid_callee :: Parser Expr

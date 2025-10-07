@@ -6,15 +6,6 @@ import Parsing
 import AST
 import RuntimeData
 
-instance Show Value where
-    show (Number' n) = show n
-    show (Boolean' b  ) = show b
-    show (String' s) = show s
-    show (Lambda' _ _ _ _) = "lambda"
-
-instance Show Error where
-    show (Error s) = "Error: " ++ s
-
 exec_program :: [Stmt] -> Either Error (IO ())
 exec_program program = helper program (Global [])
     where
@@ -52,6 +43,18 @@ exec (Block stmts) envi = do
             (envi', io) <- exec stmt envi
             (_, io')    <- exec_block rest envi'
             Right (envi, (io >> io'))
+
+exec (Function name parameters body) envi = 
+    Right (recEnv, return ())
+    where
+    -- The closure we bind to `name` must *capture recEnv* (not env).
+    func   :: Value
+    func   = Function' name parameters body recEnv (length parameters)
+
+    -- New environment frame that binds `name` to its own closure.
+    -- IMPORTANT: make a *new* frame; don't dump old bindings into this frame.
+    recEnv :: Environment
+    recEnv = Environment [(name, func)] envi
 
 eval :: Expr -> Environment -> Either Error Value
 eval (Ternary condition then_branch else_branch) envi = do
@@ -140,18 +143,28 @@ eval (Lambda parameters body) envi = Right (Lambda' parameters body envi (length
 eval (Call callee args) envi = do
     callee' <- eval callee envi
     case callee' of
-        (Lambda' _ _ _ _) -> eval_call envi args callee'
+        (Function' _ _ _ _ _) -> eval_func_call envi args callee'
+        (Lambda' _ _ _ _)     -> eval_call envi args callee'
         _ -> Left (Error ("Cannot call: " ++ (type_of callee')) )
     where
         eval_call :: Environment -> [Expr] -> Value -> Either Error Value
         eval_call envi args (Lambda' parameters body closure arity) = do
             check_arity arity (length args)
-            let args' = rights (map ((flip eval) envi) args)
+            args' <- sequence (map ((flip eval) envi) args)
             let pairs = zip parameters args'
             let envi' = Environment pairs closure
             result <- eval body envi'
             return result
         
+        eval_func_call :: Environment -> [Expr] -> Value -> Either Error Value
+        eval_func_call envi args (Function' name parameters body closure arity) = do
+            check_arity arity (length args)
+            args' <- sequence (map ((flip eval) envi) args)
+            let pairs = zip parameters args'
+            let envi' = Environment pairs closure
+            result <- eval body envi'
+            return result
+
         check_arity :: Int -> Int -> Either Error Value
         check_arity expected_arity actual_arity = if expected_arity == actual_arity then Right (Number' 0) else Left (Error ("Exptected an arity of " ++ (show expected_arity) ++ " but got " ++ (show actual_arity)))
 
