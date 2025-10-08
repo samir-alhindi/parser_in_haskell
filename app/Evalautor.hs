@@ -1,11 +1,8 @@
 module Evalautor where
 
-import Data.Either
-
-import Parsing
 import AST
 import RuntimeData
-
+ 
 exec_program :: [Stmt] -> Either Error (IO ())
 exec_program program = helper program (Global [])
     where
@@ -20,18 +17,24 @@ exec ::  Stmt -> Environment -> Either Error (Environment, IO())
 exec (Print expr) envi = do
     result <- eval expr envi
     return (envi, print result)
+
 exec (If condition then_branch) envi = do
     condition' <- is_bool envi condition
-    if condition' then exec then_branch envi else Right (envi, return ())
+    if condition'
+        then exec then_branch envi
+        else Right (envi, return ())
+
 exec (IfElse condition then_branch else_branch) envi = do
     condition' <- is_bool envi condition
-    if condition' then exec then_branch envi else exec else_branch envi
-exec (LetBinding name init) envi = do
-    init' <- eval init envi
-    let envi' = case envi of
-            (Global map)            -> Global ((name, init') : map)
-            (Environment map outer) -> Environment ((name, init') : map) outer
+    if condition'
+        then exec then_branch envi
+        else exec else_branch envi
+
+exec (LetBinding name init') envi = do
+    init'' <- eval init' envi
+    let envi' = extend_envi envi (name, init'')
     return (envi', return ())
+
 exec (Block stmts) envi = do
     let envi' = Environment [] envi
     (_, io) <- exec_block stmts envi'

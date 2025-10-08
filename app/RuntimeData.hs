@@ -31,13 +31,16 @@ data Environment =
 
 find :: Environment -> String -> Either Error Value
 find envi name = case envi of
-    (Global map) -> case filter p map of
+    (Global map') -> case filter p map' of
         []   -> Left (Error ("unbound variable: " ++ name))
         list -> let (_, value) = head list in Right value
-    (Environment map outer) -> case filter p map of
+    (Environment map' outer) -> case filter p map' of
         []   -> find outer name
         list -> let (_, value) = head list in Right value
     where
         p :: (String, Value) -> Bool
         p (k, _) = k == name
-    
+
+extend_envi :: Environment -> (String, Value) -> Environment
+extend_envi (Global map')             pair = Global (pair : map')
+extend_envi (Environment map' outer)  pair = Environment (pair : map') outer 

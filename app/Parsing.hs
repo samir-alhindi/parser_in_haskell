@@ -1,6 +1,5 @@
 module Parsing where
 
-import Control.Applicative((<*))
 import Text.Parsec
 import Text.Parsec.String
 import Text.Parsec.Expr
@@ -9,7 +8,7 @@ import Text.Parsec.Language
 import Data.Functor.Identity
 
 import AST
-
+ 
 program :: Parser [Stmt]
 program = statement_sequence <* eof <?> "program"
 
@@ -32,7 +31,7 @@ function = do
     parameters <- many1 m_identifier
     m_reservedOp "="
     body <- expression
-    m_semi
+    _ <- m_semi
     return (Function name parameters body)
 
 block :: Parser Stmt
@@ -44,7 +43,7 @@ let_binding = do
     name <- m_identifier
     m_reservedOp "="
     initialization <- expression
-    m_semi
+    _ <- m_semi
     return (LetBinding name initialization)
 
 
@@ -52,7 +51,7 @@ print' :: Parser Stmt
 print' = do
     m_reserved "print"
     expre <- expression
-    m_semi
+    _ <- m_semi
     return (Print expre) <?> "print"
 
 if_else :: Parser Stmt
@@ -82,7 +81,16 @@ def = emptyDef {
     reservedNames  = ["true", "false", "and", "or", "not", "if", "then", "else", "let", "in", "\\", "->"]
 }
 
-TokenParser {
+m_naturalOrFloat :: Parser (Either Integer Double)
+m_parens         :: Parser a -> Parser a
+m_braces         :: Parser a -> Parser a
+m_reservedOp     :: String -> Parser ()
+m_reserved       :: String -> Parser ()
+m_identifier     :: Parser String
+m_whiteSpace     :: Parser ()
+m_semi           :: Parser String
+m_stringLiteral  :: Parser String
+TokenParser { 
     naturalOrFloat  = m_naturalOrFloat,
     parens = m_parens,
     braces = m_braces,
@@ -153,10 +161,10 @@ let_expr = do
     m_reserved "let"
     name <- m_identifier
     m_reservedOp "="
-    init <- expression
+    init' <- expression
     m_reserved "in"
     result <- expression
-    return (LetExpr name init result)
+    return (LetExpr name init' result)
 
 
 lambda :: Parser Expr

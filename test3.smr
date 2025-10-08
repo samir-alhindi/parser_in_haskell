@@ -20,3 +20,6 @@ let nested = \ x ->
 print product 6 2 3;
 print traingle_area 12 6;
 print nested 3;
+
+print (\ n -> n * 2) 5;
+print (\ word -> word + "!!!") "Rayan";
