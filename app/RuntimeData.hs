@@ -17,7 +17,7 @@ instance Show Value where
     show (Boolean' b  ) = show b
     show (String' s) = show s
     show (Lambda' _ _ _ _) = "lambda"
-    show (Function' name parameters _ _ _) = name ++ " : " ++ (concat parameters)
+    show (Function' name _ _ _ _) = "function " ++ name
 
 instance Show Error where
     show (Error s) = "Error: " ++ s
