@@ -1,6 +1,8 @@
 module RuntimeData where
 
 import AST
+import Text.Parsec
+import Text.Printf
 
 data Value = 
       Number' {get_num :: Double}
@@ -10,7 +12,11 @@ data Value =
     | Function' String [String] Expr Environment Int
     deriving (Eq)
 
-newtype Error = Error {get_log :: String}
+data Error' = Error' String SourcePos
+
+instance Show Error' where
+    show (Error' err_log pos) =
+        printf "Error at position (%d,%d): %s" (sourceLine pos) (sourceColumn pos) err_log
 
 instance Show Value where
     show (Number' n) = show n
@@ -19,8 +25,6 @@ instance Show Value where
     show (Lambda' _ _ _ _) = "lambda"
     show (Function' name _ _ _ _) = "function " ++ name
 
-instance Show Error where
-    show (Error s) = "Error: " ++ s
 
 type Map = [(String, Value)]
 
@@ -29,13 +33,13 @@ data Environment =
     | Environment {get_map :: Map, get_outer :: Environment}
     deriving (Eq)
 
-find :: Environment -> String -> Either Error Value
-find envi name = case envi of
+find :: Environment -> String -> SourcePos -> Either Error' Value
+find envi name pos = case envi of
     (Global map') -> case filter p map' of
-        []   -> Left (Error ("unbound variable: " ++ name))
+        []   -> Left (Error' ("unbound variable: " ++ name) pos)
         list -> let (_, value) = head list in Right value
     (Environment map' outer) -> case filter p map' of
-        []   -> find outer name
+        []   -> find outer name pos
         list -> let (_, value) = head list in Right value
     where
         p :: (String, Value) -> Bool

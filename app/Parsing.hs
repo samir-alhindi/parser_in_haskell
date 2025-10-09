@@ -57,28 +57,30 @@ print' = do
 if_else :: Parser Stmt
 if_else = do
     m_reserved "if"
+    pos <- getPosition
     condition <- expression
     m_reserved "then"
     then_branch <- statement
     m_reserved "else"
     else_branch <- statement
-    return (IfElse condition then_branch else_branch)
+    return (IfElse pos condition then_branch else_branch)
 
 if' :: Parser Stmt
 if' = do
     m_reserved "if"
+    pos <- getPosition
     condition <- expression
     m_reserved "then"
     then_branch <- statement
-    return (If condition then_branch)
+    return (If pos condition then_branch)
 
 
 def :: LanguageDef ()
 def = emptyDef {
     opStart = oneOf "+-*/><=!",
     opLetter = oneOf "<>=",
-    reservedOpNames = ["+", "-", "*", "/", ">", "<", ">=", "<=", "==", "!=", "and", "or", "not", "=", "><", "<>"],
-    reservedNames  = ["true", "false", "and", "or", "not", "if", "then", "else", "let", "in", "\\", "->"]
+    reservedOpNames = ["+", "-", "*", "/", ">", "<", ">=", "<=", "==", "!=", "and", "or", "not", "=", "><", "<>", "\\", "->"],
+    reservedNames  = ["true", "false", "and", "or", "not", "if", "then", "else", "let", "in"]
 }
 
 m_naturalOrFloat :: Parser (Either Integer Double)
@@ -120,27 +122,27 @@ atom = m_parens expression
 
 table :: [[Operator String () Identity Expr]]
 table = [
-    [Prefix (m_reservedOp "-" >> return ((Unary Negation)))           ],
+    [Prefix (m_reservedOp "-"   >> getPosition >>= \ pos -> return ((Unary pos Negation)))           ],
 
-    [Infix  (m_reservedOp "*" >> return (Binary Multiply)) AssocLeft,
-     Infix  (m_reservedOp "/" >> return (Binary Divide))   AssocLeft],
+    [Infix  (m_reservedOp "*"   >> getPosition >>= \ pos -> return (Binary pos Multiply)) AssocLeft,
+     Infix  (m_reservedOp "/"   >> getPosition >>= \ pos -> return (Binary pos Divide))   AssocLeft],
 
-    [Infix  (m_reservedOp "+" >> return (Binary Plus))     AssocLeft,
-     Infix  (m_reservedOp "-" >> return (Binary Minus))    AssocLeft],
+    [Infix  (m_reservedOp "+"   >> getPosition >>= \ pos -> return (Binary pos Plus))     AssocLeft,
+     Infix  (m_reservedOp "-"   >> getPosition >>= \ pos -> return (Binary pos Minus))    AssocLeft],
 
-    [Infix (m_reservedOp ">" >> return (Binary Greater)) AssocNone,
-     Infix (m_reservedOp "<" >> return (Binary Less))    AssocNone,
-     Infix (m_reservedOp ">=" >> return (Binary GreaterEqual))   AssocNone,
-     Infix (m_reservedOp "<=" >> return (Binary LessEqual))   AssocNone],
+    [Infix (m_reservedOp ">"    >> getPosition >>= \ pos -> return (Binary pos Greater)) AssocNone,
+     Infix (m_reservedOp "<"    >> getPosition >>= \ pos -> return (Binary pos Less))    AssocNone,
+     Infix (m_reservedOp ">="   >> getPosition >>= \ pos -> return (Binary pos GreaterEqual))   AssocNone,
+     Infix (m_reservedOp "<="   >> getPosition >>= \ pos -> return (Binary pos LessEqual))   AssocNone],
 
-    [Infix (m_reservedOp "==" >> return (Binary DoubleEquals)) AssocLeft,
-     Infix (m_reservedOp "!=" >> return (Binary NotEquals))   AssocLeft],
+    [Infix (m_reservedOp "=="   >> getPosition >>= \ pos -> return (Binary pos DoubleEquals)) AssocLeft,
+     Infix (m_reservedOp "!="   >> getPosition >>= \ pos -> return (Binary pos NotEquals))   AssocLeft],
 
-    [Prefix (m_reservedOp "not" >> return (Unary Not))                              ],
-    [Infix  (m_reservedOp "and" >> return (Binary And)) AssocLeft                    ],
-    [Infix  (m_reservedOp "or" >> return (Binary Or)) AssocLeft                      ],
+    [Prefix (m_reservedOp "not" >> getPosition >>= \ pos -> return (Unary pos Not))                              ],
+    [Infix  (m_reservedOp "and" >> getPosition >>= \ pos -> return (Binary pos And)) AssocLeft                    ],
+    [Infix  (m_reservedOp "or"  >> getPosition >>= \ pos -> return (Binary pos Or)) AssocLeft                      ],
     
-    [Infix (m_reservedOp "><" >> return (Binary Bind)) AssocLeft]]    
+    [Infix (m_reservedOp "><"   >> getPosition >>= \ pos -> return (Binary pos Bind)) AssocLeft]]    
 
 number :: Parser Expr
 number = f <$> m_naturalOrFloat
@@ -150,7 +152,10 @@ number = f <$> m_naturalOrFloat
         f (Right d)  = Number d
 
 identifier' :: Parser Expr
-identifier' = Name <$> m_identifier
+identifier' = do
+    name <- m_identifier
+    pos <- getPosition
+    return (Name pos name)
 
 boolean :: Parser Expr
 boolean = (m_reserved "true"   >> return (Boolean True ))
@@ -169,17 +174,18 @@ let_expr = do
 
 lambda :: Parser Expr
 lambda = do
-    m_reserved "\\"
+    m_reservedOp "\\"
     parameters <- many1 m_identifier
-    m_reserved "->"
+    m_reservedOp "->"
     body <- expression
     return (Lambda parameters body)
 
 call :: Parser Expr
 call = do
     callee <- valid_callee <|> (m_parens valid_callee)
+    pos <- getPosition
     args <- many1 atom
-    return (Call callee args)
+    return (Call pos callee args)
         where
             valid_callee :: Parser Expr
             valid_callee = identifier' <|> lambda <|> (m_parens expression)
@@ -187,12 +193,13 @@ call = do
 ternary :: Parser Expr
 ternary = do
     m_reserved "if"
+    pos <- getPosition
     condition <- expression
     m_reserved "then"
     then_branch <- expression
     m_reserved "else"
     else_branch <- expression
-    return (Ternary condition then_branch else_branch)
+    return (Ternary pos condition then_branch else_branch)
 
 my_parse :: String -> Either ParseError [Stmt]
 my_parse source = parse (m_whiteSpace >> program) "" source

@@ -1,27 +1,28 @@
 
 module AST where
 
+import Text.Parsec
+
 data Stmt =
       Print Expr
-    | If Expr Stmt
-    | IfElse Expr Stmt Stmt
+    | If SourcePos Expr Stmt
+    | IfElse SourcePos Expr Stmt Stmt
     | LetBinding String Expr
     | Function String [String] Expr
     | Block [Stmt]
     deriving Show
 
-
 data Expr =
       Number Double
     | Boolean Bool
-    | Name String
+    | Name SourcePos String
     | LetExpr String Expr Expr
-    | Binary BinOpp Expr Expr
-    | Unary UnaryOpp Expr
+    | Binary SourcePos BinOpp Expr Expr
+    | Unary SourcePos UnaryOpp Expr
     | StringExpr String
-    | Ternary Expr Expr Expr
+    | Ternary SourcePos Expr Expr Expr
     | Lambda [String] Expr
-    | Call Expr [Expr]
+    | Call SourcePos Expr [Expr]
     deriving (Show, Eq)
 
 
