@@ -1,0 +1,48 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "sfl",
+	"patterns": [
+		{"include": "#keywords"},
+		{"include": "#strings"},
+		{"include": "#opperators"},
+		{"include": "#reserved"},
+		{"include": "#digits"},
+		{"include": "#identifiers"}],
+	"repository": {
+		"keywords": {
+			"patterns": [{
+				"name": "keyword.control.sfl",
+				"match": "\\b(if|then|else|let|in|print)\\b"
+			}]
+		},
+		"strings": {
+			"name": "string.quoted.double.sfl",
+			"begin": "\"",
+			"end": "\"",
+			"patterns": [
+				{
+					"name": "constant.character.escape.sfl",
+					"match": "\\\\."
+				}
+			]
+		},
+		"opperators" : {
+			"name" : "keyword.operator",
+			"match" : "(->|\\+|-|\\*|/|==|!=|><|\\\\|<=|>=|>|<)|\\b(and|or|not)\\b"
+			
+		},
+		"reserved" : {
+			"name": "constant.language",
+			"match": "\\b(true|false)\\b"
+		},
+		"digits":{
+			"name":"constant.numeric",
+			"match": "\\b(\\d+)\\b"
+		},
+		"identifiers":{
+			"name": "support.variable",
+			"match": "\\b(\\w+)\\b"
+		}
+	},
+	"scopeName": "source.sfl"
+}

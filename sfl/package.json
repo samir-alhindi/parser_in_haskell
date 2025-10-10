@@ -1,0 +1,25 @@
+{
+  "name": "sfl",
+  "displayName": "sfl",
+  "description": "sfl",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.105.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [{
+      "id": "sfl",
+      "aliases": ["sfl", "sfl"],
+      "extensions": [".sfl"],
+      "configuration": "./language-configuration.json"
+    }],
+    "grammars": [{
+      "language": "sfl",
+      "scopeName": "source.sfl",
+      "path": "./syntaxes/sfl.tmLanguage.json"
+    }]
+  }
+}
