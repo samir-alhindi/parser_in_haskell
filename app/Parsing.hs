@@ -143,8 +143,8 @@ table = [
     [Infix (m_reservedOp "=="   >> getPosition >>= \ pos -> return (Binary pos DoubleEquals)) AssocLeft,
      Infix (m_reservedOp "!="   >> getPosition >>= \ pos -> return (Binary pos NotEquals))   AssocLeft],
 
-    [Prefix (m_reserved "!"     >> getPosition >>= \ pos -> return (Unary pos Head)),
-     Prefix (m_reserved "#"     >> getPosition >>= \ pos -> return (Unary pos Tail))],
+    [Prefix (m_reservedOp "!"     >> getPosition >>= \ pos -> return (Unary pos Head)),
+     Prefix (m_reservedOp "#"     >> getPosition >>= \ pos -> return (Unary pos Tail))],
 
     [Infix (m_reservedOp ":"    >> getPosition >>= \ pos -> return (Binary pos Cons)) AssocLeft],
 

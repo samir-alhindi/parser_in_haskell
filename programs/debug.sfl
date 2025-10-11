@@ -1,0 +1,6 @@
+
+
+is_empty list = if list == [] then true else false;
+
+map func list = if is_empty list then [] else
+((func (!list)) : (map func (#list)));

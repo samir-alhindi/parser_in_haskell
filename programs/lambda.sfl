@@ -31,3 +31,5 @@ print result 5;
 
 print add_five >< (-1);
 print add >< 4 >< 7;
+
+print if false then [] else add (-1) 5;

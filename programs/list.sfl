@@ -27,3 +27,23 @@ print matrix;
 print 1 : [2];
 print 1 : (2 : (3 : (4 : [])));
 print [1] : [1];
+
+print ![1, 2, 3];
+print !["Samir"];
+print !(![[1]]);
+
+print #[1, 2, 3];
+print #[1];
+print #[1, [1, 2, 3]];
+
+is_empty list =
+    if list == []
+        then true
+        else false;
+
+map func list = if is_empty list
+    then []
+    else ((func (!list)) : (map func (#list)));
+
+print map (\ n -> n * 2) [1, 2, 3, 4, 5];
+print map (\ s -> s + " !!!") ["Samir", "Rayyan", "Maria"];

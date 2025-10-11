@@ -185,6 +185,18 @@ eval (Unary pos opp e) envi = do
             case v of
             Boolean' b -> Right (Boolean' (not b))
             _ -> Left (Error' ("'not' opperand must be a boolean and not of type "++(type_of v)) pos)
+        Head ->
+            case v of
+                (List' list) -> if length list == 0
+                    then Left  (Error' "cannot get head of empty list" pos)
+                    else Right (head list)
+                _ -> Left (Error' ("'!' opperand must be a list and not of type "++(type_of v)) pos)
+
+        Tail ->
+            case v of
+                List' (_:xs) -> Right (List' xs)
+                List' []     -> Left  (Error' ("Cannot get tail of empty list") pos)
+                _ -> Left (Error' ("'#' opperand must be a list and not of type "++(type_of v)) pos)
 
 eval (Lambda parameters body) envi = Right (Lambda' parameters body envi (length parameters))
  
