@@ -30,7 +30,8 @@ data Expr =
 data BinOpp = Plus | Minus | Multiply | Divide
   | And | Or
   | Greater | Less | GreaterEqual | LessEqual | DoubleEquals | NotEquals
-  | Bind | CallOp
+  | Bind
+  | Cons
   deriving (Show, Eq)
 
-data UnaryOpp = Negation | Not deriving (Show, Eq)
+data UnaryOpp = Negation | Not | Head | Tail deriving (Show, Eq)

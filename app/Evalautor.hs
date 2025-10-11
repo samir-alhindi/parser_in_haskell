@@ -72,6 +72,7 @@ eval (Binary pos opp e1 e2) envi
     | opp `elem` [And, Or]                 = binary_boolean
     | opp == Plus                          = plus
     | opp == Bind                          = bind
+    | opp == Cons                          = cons
     | otherwise                            = relational
     where
         binary_number :: Either Error' Value
@@ -140,6 +141,15 @@ eval (Binary pos opp e1 e2) envi
                         else
                             let closure' = Environment ((head parameters, x) : []) closure
                             in Right (callable (tail parameters) body closure' (arity-1))
+
+        cons :: Either Error' Value
+        cons = do
+            head'  <- eval e1 envi
+            tails <- eval e2 envi
+            case tails of
+                (List' elements) -> Right (List' (head' : elements))
+                _                -> Left  (Error' ("second ':' opperand must be a list and not of type " ++ type_of tails) pos)
+
 
         check_number_opperands :: Either Error' (Double, Double)
         check_number_opperands = do

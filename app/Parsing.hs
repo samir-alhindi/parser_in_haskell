@@ -77,9 +77,9 @@ if' = do
 
 def :: LanguageDef ()
 def = emptyDef {
-    opStart = oneOf "+-*/><=!",
+    opStart = oneOf "+-*/><=!:#",
     opLetter = oneOf "<>=",
-    reservedOpNames = ["+", "-", "*", "/", ">", "<", ">=", "<=", "==", "!=", "and", "or", "not", "=", "><", "<>", "\\", "->"],
+    reservedOpNames = ["+", "-", "*", "/", ">", "<", ">=", "<=", "==", "!=", "and", "or", "not", "=", "><", "\\", "->", "!", "#", ":"],
     reservedNames  = ["true", "false", "and", "or", "not", "if", "then", "else", "let", "in"]
 }
 
@@ -142,6 +142,11 @@ table = [
 
     [Infix (m_reservedOp "=="   >> getPosition >>= \ pos -> return (Binary pos DoubleEquals)) AssocLeft,
      Infix (m_reservedOp "!="   >> getPosition >>= \ pos -> return (Binary pos NotEquals))   AssocLeft],
+
+    [Prefix (m_reserved "!"     >> getPosition >>= \ pos -> return (Unary pos Head)),
+     Prefix (m_reserved "#"     >> getPosition >>= \ pos -> return (Unary pos Tail))],
+
+    [Infix (m_reservedOp ":"    >> getPosition >>= \ pos -> return (Binary pos Cons)) AssocLeft],
 
     [Prefix (m_reservedOp "not" >> getPosition >>= \ pos -> return (Unary pos Not))                              ],
     [Infix  (m_reservedOp "and" >> getPosition >>= \ pos -> return (Binary pos And)) AssocLeft                    ],
