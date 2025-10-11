@@ -86,21 +86,25 @@ def = emptyDef {
 m_naturalOrFloat :: Parser (Either Integer Double)
 m_parens         :: Parser a -> Parser a
 m_braces         :: Parser a -> Parser a
+m_brackets       :: Parser a -> Parser a
 m_reservedOp     :: String -> Parser ()
 m_reserved       :: String -> Parser ()
 m_identifier     :: Parser String
 m_whiteSpace     :: Parser ()
 m_semi           :: Parser String
+m_comma          :: Parser String
 m_stringLiteral  :: Parser String
 TokenParser { 
     naturalOrFloat  = m_naturalOrFloat,
     parens = m_parens,
     braces = m_braces,
+    brackets = m_brackets,
     reservedOp = m_reservedOp,
     reserved  = m_reserved,
     identifier = m_identifier,
     whiteSpace = m_whiteSpace,
     semi       = m_semi,
+    comma      = m_comma, 
     stringLiteral  = m_stringLiteral
 } = makeTokenParser def
 
@@ -112,6 +116,7 @@ term = try call <|> atom
 
 atom :: Parser Expr
 atom = m_parens expression
+    <|> try list
     <|> try number
     <|> try ternary
     <|> try (StringExpr <$> m_stringLiteral)
@@ -200,6 +205,21 @@ ternary = do
     m_reserved "else"
     else_branch <- expression
     return (Ternary pos condition then_branch else_branch)
+
+list :: Parser Expr
+list = do
+    elements' <- m_brackets (elements <|> empty_list)
+    return (List elements')
+
+    where
+        elements :: Parser [Expr]
+        elements = do
+            first <- expression
+            rest <- many (m_comma >> expression)
+            return (first : rest)
+        
+        empty_list :: Parser [Expr]
+        empty_list = return []
 
 my_parse :: String -> Either ParseError [Stmt]
 my_parse source = parse (m_whiteSpace >> program) "" source

@@ -203,6 +203,10 @@ eval (LetExpr name init' body) envi = do
     result <- eval body envi'
     return result
 
+eval (List elements) envi = do
+    elements' <- sequence (map (`eval` envi) elements)
+    return (List' elements')
+
 is_bool :: Environment -> Expr -> SourcePos -> Either Error' Bool
 is_bool envi expr pos = case eval expr envi of
     Right (Boolean' b) -> Right b
@@ -211,8 +215,9 @@ is_bool envi expr pos = case eval expr envi of
 
 type_of :: Value -> String
 type_of v = case v of
-    String' _ -> "string"
-    Number' _  -> "number"
-    Boolean'   _  -> "boolean"
-    Lambda' _ _ _ _ -> "lambda"
+    String' _           -> "string"
+    Number' _           -> "number"
+    Boolean'   _        -> "boolean"
+    Lambda' _ _ _ _     -> "lambda"
     Function' _ _ _ _ _ -> "function"
+    List' _             -> "list"

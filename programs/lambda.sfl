@@ -16,7 +16,7 @@ print ((product 4) 5) + sqr 4;
 
 let greet = \ name -> "Hello: " + name;
 print greet "Samir";
-print greet "Yahya";
+print greet "Rayyan";
 
 let add_five = add >< 5;
 print add_five 6;

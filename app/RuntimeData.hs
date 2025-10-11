@@ -10,6 +10,7 @@ data Value =
     | String' {get_str :: String}
     | Lambda' [String] Expr Environment Int
     | Function' String [String] Expr Environment Int
+    | List' [Value]
     deriving (Eq)
 
 data Error' = Error' String SourcePos
@@ -24,6 +25,7 @@ instance Show Value where
     show (String' s) = show s
     show (Lambda' _ _ _ _) = "lambda"
     show (Function' name _ _ _ _) = "function " ++ name
+    show (List' elements) = show elements
 
 
 type Map = [(String, Value)]

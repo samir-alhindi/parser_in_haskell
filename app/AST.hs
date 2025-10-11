@@ -23,6 +23,7 @@ data Expr =
     | Ternary SourcePos Expr Expr Expr
     | Lambda [String] Expr
     | Call SourcePos Expr [Expr]
+    | List [Expr]
     deriving (Show, Eq)
 
 
