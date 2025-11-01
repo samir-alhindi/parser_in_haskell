@@ -77,9 +77,9 @@ if' = do
 
 def :: LanguageDef ()
 def = emptyDef {
-    opStart = oneOf "+-*/><=!:#",
+    opStart = oneOf "+-*/><=!:#%",
     opLetter = oneOf "<>=",
-    reservedOpNames = ["+", "-", "*", "/", ">", "<", ">=", "<=", "==", "!=", "and", "or", "not", "=", "><", "\\", "->", "!", "#", ":"],
+    reservedOpNames = ["+", "-", "*", "/", ">", "<", ">=", "<=", "==", "!=", "and", "or", "not", "=", "><", "\\", "->", "!", "#", ":", "%"],
     reservedNames  = ["true", "false", "and", "or", "not", "if", "then", "else", "let", "in"]
 }
 
@@ -127,10 +127,14 @@ atom = m_parens expression
 
 table :: [[Operator String () Identity Expr]]
 table = [
-    [Prefix (m_reservedOp "-"   >> getPosition >>= \ pos -> return ((Unary pos Negation)))           ],
+    [Prefix (m_reservedOp "-"   >> getPosition >>= \ pos -> return ((Unary pos Negation)))          ],
+
+    [Prefix (m_reservedOp "!"     >> getPosition >>= \ pos -> return (Unary pos Head)),
+     Prefix (m_reservedOp "#"     >> getPosition >>= \ pos -> return (Unary pos Tail))],
 
     [Infix  (m_reservedOp "*"   >> getPosition >>= \ pos -> return (Binary pos Multiply)) AssocLeft,
-     Infix  (m_reservedOp "/"   >> getPosition >>= \ pos -> return (Binary pos Divide))   AssocLeft],
+     Infix  (m_reservedOp "/"   >> getPosition >>= \ pos -> return (Binary pos Divide))   AssocLeft,
+     Infix  (m_reservedOp "%"   >> getPosition >>= \ pos -> return (Binary pos Mod))   AssocLeft],
 
     [Infix  (m_reservedOp "+"   >> getPosition >>= \ pos -> return (Binary pos Plus))     AssocLeft,
      Infix  (m_reservedOp "-"   >> getPosition >>= \ pos -> return (Binary pos Minus))    AssocLeft],
@@ -142,9 +146,6 @@ table = [
 
     [Infix (m_reservedOp "=="   >> getPosition >>= \ pos -> return (Binary pos DoubleEquals)) AssocLeft,
      Infix (m_reservedOp "!="   >> getPosition >>= \ pos -> return (Binary pos NotEquals))   AssocLeft],
-
-    [Prefix (m_reservedOp "!"     >> getPosition >>= \ pos -> return (Unary pos Head)),
-     Prefix (m_reservedOp "#"     >> getPosition >>= \ pos -> return (Unary pos Tail))],
 
     [Infix (m_reservedOp ":"    >> getPosition >>= \ pos -> return (Binary pos Cons)) AssocLeft],
 

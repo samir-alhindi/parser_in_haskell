@@ -3,6 +3,7 @@ module RuntimeData where
 import AST
 import Text.Parsec
 import Text.Printf
+import Data.List (isSuffixOf)
 
 data Value = 
       Number' {get_num :: Double}
@@ -20,7 +21,7 @@ instance Show Error' where
         printf "Error at position (%d,%d): %s" (sourceLine pos) (sourceColumn pos) err_log
 
 instance Show Value where
-    show (Number' n) = show n
+    show (Number' n) = if ".0" `isSuffixOf` (show n) then show (floor n :: Integer) else show n
     show (Boolean' b  ) = show b
     show (String' s) = show s
     show (Lambda' _ _ _ _) = "lambda"

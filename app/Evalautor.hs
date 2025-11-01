@@ -3,6 +3,7 @@ module Evalautor where
 import AST
 import RuntimeData
 import Text.Parsec
+import Data.Fixed (mod')
  
 exec_program :: [Stmt] -> Either Error' (IO ())
 exec_program program = helper program (Global [])
@@ -68,7 +69,7 @@ eval (Number n) _ = Right (Number' n)
 eval (Boolean b) _ = Right (Boolean' b)
 
 eval (Binary pos opp e1 e2) envi
-    | opp `elem` [Minus, Multiply, Divide] = binary_number
+    | opp `elem` [Minus, Multiply, Divide, Mod] = binary_number
     | opp `elem` [And, Or]                 = binary_boolean
     | opp == Plus                          = plus
     | opp == Bind                          = bind
@@ -82,6 +83,7 @@ eval (Binary pos opp e1 e2) envi
                 Minus    -> n1 - n2
                 Multiply -> n1 * n2
                 Divide   -> n1 / n2
+                Mod      -> mod' n1 n2
                 _        -> -1 -- This will never run.
         
         binary_boolean :: Either Error' Value

@@ -1,0 +1,45 @@
+
+is_empty list = if list == [] then true else false;
+
+len list = if is_empty list
+    then 0
+    else 1 + len (#list);
+
+map func list = if is_empty list
+    then []
+    else func (!list) : map func (#list);
+
+filter predicate list = if is_empty list
+    then []
+    else
+        if predicate (!list)
+            then !list : filter predicate (#list)
+            else filter predicate (#list);
+
+sum list = if is_empty list
+    then 0
+    else !list + sum (#list);
+
+fold func init list = if is_empty list
+    then init
+    else func (!list) (fold func init (#list));
+
+let sum     = fold >< (\x y -> x + y) >< 0; 
+let product = fold >< (\x y -> x * y) >< 1;
+
+all list p = if is_empty list
+    then true
+    else p (!list) and all (#list) p;
+
+some list p = if is_empty list
+    then false
+    else p (!list) or some (#list) p;
+
+let numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+
+print map    (\n -> n * n)      numbers;
+print filter (\n -> n % 2 == 0) numbers;
+print sum                       numbers;
+print product                   numbers;
+print all numbers  (\n -> n > 0);
+print some numbers (\n -> n % 2 == 0);

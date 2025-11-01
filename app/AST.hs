@@ -27,7 +27,7 @@ data Expr =
     deriving (Show, Eq)
 
 
-data BinOpp = Plus | Minus | Multiply | Divide
+data BinOpp = Plus | Minus | Multiply | Divide | Mod
   | And | Or
   | Greater | Less | GreaterEqual | LessEqual | DoubleEquals | NotEquals
   | Bind

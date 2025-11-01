@@ -20,6 +20,16 @@
   (major1) == 4 && (major2) <  18 || \
   (major1) == 4 && (major2) == 18 && (minor) <= 3)
 #endif /* MIN_VERSION_base */
+/* package binary-0.8.9.1 */
+#ifndef VERSION_binary
+#define VERSION_binary "0.8.9.1"
+#endif /* VERSION_binary */
+#ifndef MIN_VERSION_binary
+#define MIN_VERSION_binary(major1,major2,minor) (\
+  (major1) <  0 || \
+  (major1) == 0 && (major2) <  8 || \
+  (major1) == 0 && (major2) == 8 && (minor) <= 9)
+#endif /* MIN_VERSION_binary */
 /* package ghci-dap-0.0.26.0 */
 #ifndef VERSION_ghci_dap
 #define VERSION_ghci_dap "0.0.26.0"
